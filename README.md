@@ -34,29 +34,34 @@ Ou direto:
 docker build -t projeto-simples . && docker run -p 3000:3000 projeto-simples
 ```
 
-## CI (GitHub Actions)
+## Pipeline (GitHub Actions)
 
-`.github/workflows/ci.yml` roda em todo push e pull request:
+Tudo em `.github/workflows/ci.yml`, em tres etapas encadeadas:
 
-1. `npm ci`, `npm run lint`, `npm run typecheck`, `npm run build`
-2. build da imagem Docker (com cache do Actions)
+```
+qualidade  ->  docker  ->  deploy
+```
 
-## Deploy na Vercel
+1. **qualidade** — `npm ci`, `npm run lint`, `npm run typecheck`, `npm run build`.
+   Roda em todo push (qualquer branch) e em pull request.
+2. **docker** — build da imagem Docker, com cache do proprio Actions.
+   So roda se a etapa anterior passar.
+3. **deploy** — publica em producao na Vercel. So roda em push na `main`
+   e so depois das duas etapas anteriores passarem.
 
-`.github/workflows/deploy.yml` publica em producao a cada push na `main`.
-Antes de usar, crie o projeto na Vercel e cadastre os secrets no repositorio
-(Settings > Secrets and variables > Actions):
+Ou seja: build quebrado nao vira imagem, e imagem quebrada nao vai pro ar.
+
+### Secrets necessarios para o deploy
+
+Cadastre em *Settings > Secrets and variables > Actions*:
 
 | Secret | Onde encontrar |
 | --- | --- |
 | `VERCEL_TOKEN` | Vercel > Account Settings > Tokens |
-| `VERCEL_ORG_ID` | `.vercel/project.json` apos rodar `vercel link` |
+| `VERCEL_ORG_ID` | `.vercel/project.json`, gerado por `vercel link` |
 | `VERCEL_PROJECT_ID` | idem |
 
 Defina tambem `APP_USER` e `APP_PASSWORD` nas Environment Variables do projeto na Vercel.
-
-> Se preferir, a integracao nativa Vercel + GitHub ja faz o deploy automatico;
-> nesse caso o workflow de deploy pode ser removido.
 
 ## Variaveis de ambiente
 
